@@ -9,20 +9,31 @@ import {
   jetColormap,
 } from '../utils/fea-solver';
 
+export const DEFAULT_DEFORMATION_SCALE = 10;
+
 export const useFEAStore = defineStore('fea', () => {
   const model = ref<FEAModel>({ nodes: [], elements: [], loads: [] });
   const result = ref<FEAResult | null>(null);
   const selectedPreset = ref<string>('cantilever');
+  // 当前生效的变形显示状态：仅在有求解结果时才可能为 true
   const showDeformed = ref(false);
-  const deformationScale = ref(10);
+  const deformationScale = ref(DEFAULT_DEFORMATION_SCALE);
+  // 记住用户最后一次的选择，重新求解后恢复
+  const lastShowDeformed = ref(false);
+  const lastDeformationScale = ref(DEFAULT_DEFORMATION_SCALE);
   const selectedElement = ref<number | null>(null);
   const heatmapMode = ref<'stress' | 'strain' | 'force'>('stress');
+
+  const hasResult = computed(() => result.value !== null);
 
   // ─── Actions ──────────────────────────────────────────────────────────────
   function loadPreset(name: string) {
     selectedPreset.value = name;
     result.value = null;
     selectedElement.value = null;
+    // 切换算例：变形显示与缩放一起归位到默认，残留的缩放不能带到新模型
+    showDeformed.value = false;
+    deformationScale.value = DEFAULT_DEFORMATION_SCALE;
     switch (name) {
       case 'cantilever':
         model.value = presetCantileverBeam();
@@ -40,10 +51,25 @@ export const useFEAStore = defineStore('fea', () => {
 
   function solve() {
     result.value = feaSolve(model.value);
+    // 重新计算后恢复用户最后的选择
+    showDeformed.value = lastShowDeformed.value;
+    deformationScale.value = lastDeformationScale.value;
   }
 
   function toggleDeformed() {
+    // 没有结果时开关不生效，勾选状态必须与画布实际显示保持一致
+    if (!result.value) {
+      showDeformed.value = false;
+      return;
+    }
     showDeformed.value = !showDeformed.value;
+    lastShowDeformed.value = showDeformed.value;
+  }
+
+  function setDeformationScale(value: number) {
+    if (!result.value) return;
+    deformationScale.value = value;
+    lastDeformationScale.value = value;
   }
 
   function selectElement(id: number | null) {
@@ -118,12 +144,14 @@ export const useFEAStore = defineStore('fea', () => {
     deformationScale,
     selectedElement,
     heatmapMode,
+    hasResult,
     maxStress,
     maxDisplacement,
     elementColors,
     loadPreset,
     solve,
     toggleDeformed,
+    setDeformationScale,
     selectElement,
     setHeatmapMode,
     addLoad,

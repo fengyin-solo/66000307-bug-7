@@ -47,18 +47,25 @@ const store = useFEAStore();
     </button>
 
     <!-- Deformed mesh toggle -->
-    <label class="flex items-center gap-2 cursor-pointer">
+    <label
+      class="flex items-center gap-2"
+      :class="store.hasResult ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'"
+    >
       <input
         type="checkbox"
         :checked="store.showDeformed"
+        :disabled="!store.hasResult"
         @change="store.toggleDeformed()"
         class="accent-sky-500"
       />
       <span class="text-xs text-slate-300">显示变形网格</span>
     </label>
+    <div v-if="!store.hasResult" class="text-[10px] text-amber-400/80 -mt-1">
+      暂无计算结果，求解后可显示变形网格
+    </div>
 
     <!-- Deformation scale -->
-    <div>
+    <div :class="store.hasResult ? '' : 'opacity-60'">
       <div class="flex justify-between text-xs text-slate-400 mb-1">
         <span>变形缩放</span>
         <span class="text-sky-400 font-mono">{{ store.deformationScale }}x</span>
@@ -68,8 +75,9 @@ const store = useFEAStore();
         min="1"
         max="100"
         :value="store.deformationScale"
-        @input="store.deformationScale = Number(($event.target as HTMLInputElement).value)"
-        class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-500"
+        :disabled="!store.hasResult"
+        @input="store.setDeformationScale(Number(($event.target as HTMLInputElement).value))"
+        class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-500 disabled:cursor-not-allowed"
       />
     </div>
 

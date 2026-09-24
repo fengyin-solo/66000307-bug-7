@@ -113,6 +113,14 @@ function draw() {
     ctx.setLineDash([]);
   }
 
+  // No result yet: explain why deformed mesh / heatmap are unavailable
+  if (!store.result) {
+    ctx.fillStyle = 'rgba(148,163,184,0.9)';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('暂无计算结果 — 点击「求解 FEA」后可显示变形网格与热力图', 12, 20);
+  }
+
   // Draw nodes
   for (const node of nodes) {
     const [x, y] = toScreen(node.x, node.y);
